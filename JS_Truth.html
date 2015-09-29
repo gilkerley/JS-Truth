@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html ng-app ng-controller="compController">
+<header>
+	<title>{{ title }}</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="http:/www.gilk.org/images/favicon.ico" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<style>
+		html, body {
+			position: relative;
+			color: #fed;
+			background-color: #210;
+			font-family: arial sans-serif;
+			width: 100%;
+			padding: 0;
+			margin: 0;
+		}
+
+		body {
+			padding: 1em;
+		}
+
+		h3, h4, h5 {
+			color: white;
+		}
+
+		h3, h4 {
+			position: relative;
+			display: block;
+			min-width: 12em;
+			text-align: center;
+			margin: 1em auto;
+		}
+
+		h4 {
+			font-size: smaller;
+		}
+
+		h5 {
+			text-decoration: underline;
+		}
+
+		div.content {
+			position: relative;
+			width: 67%;
+			max-width: 40em;
+			margin: 1em auto;
+		}
+
+		div.row {
+			position: relative;
+			width: 100%;
+			font-family: 'monospaced', sans-serif;
+		}
+
+		pre {
+			color: #011;
+			background-color: #eee;
+			padding: 1em;
+		}
+
+		span.result {
+			position: absolute;
+			top: 0;
+			right: 1em;
+			display: inline-block;
+			font-weight: bold;
+			min-width: 8em;
+		}
+
+		span.surprise {
+			color: red;
+		}
+
+		a {
+			color: deepskyblue;
+		}
+	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.1/angular.min.js"></script>
+	<script>
+		//	'use strict'; // No.  Don't.
+
+		function compController($scope) {
+			$scope.title = 'Javascript Truth';
+		}
+
+		function ExpressionEvaluator(targetId, env) {
+			if (env) {
+				eval(env);
+			}
+
+			var targetElm = document.querySelector(targetId);
+			var target = angular.element(targetElm);
+			
+			function showEval(item) {
+				function addRow(item, result, isSurprising) {
+					var cssClass = 'result';
+					if (isSurprising) {
+						cssClass += ' surprise';
+					}
+					var resultType = typeof result;
+					target.append('<div class="row">' +item+ '<span class="' +cssClass+ '">' +resultType+ ' [' +(result)+ ']</span></div>');
+				}
+
+				var result = '';
+				try {
+					result = eval(item.exp);
+				} catch (e) {
+					result = 'Error: ' + e;
+					item.isSurprising = true;
+				}
+				addRow(item.exp, result, item.isSurprising);
+			}
+
+			function showEvalList(list) {
+				for (var ndx in list) {
+					showEval(list[ndx]);
+				}
+				spaceOutput();
+			}
+			
+			function spaceOutput() {
+				target.append('<br>');
+			}
+
+			return {
+				showEval: showEval,
+				showEvalList: showEvalList,
+				spaceOutput: spaceOutput
+			};
+		}
+	</script>
+</header>
+<body>
+
+<h3>{{ title }}</h3>
+<h4>Truthyness, Comparison & Types<br/>
+	... in case you were wondering ...
+</h4>
+
+<div class="content">
+	<p>The following lists common JS comparison and type checking expressions - evaluated <i>live</i> in your browser.</p>
+	<h5>Value Comparisons</h5>
+	<p>
+		The == and != operators perform value comparisons.
+		They attempt to convert the operands to compatible types before checking equality. <br/>
+	<ul>
+		<li> 0 becomes boolean (false), when compared to a boolean <br/></li>
+		<li> 1 becomes boolean (true), when compared to a boolean <br/></li>
+		<li> "any" becomes boolean (true), when compared to a boolean <br/></li>
+		<li> "" becomes boolean (false), when compared to a boolean <br/></li>
+	</ul>
+	</p>
+	<pre id="valueExpEnv"
+	     title="Value Comparisons Environment">
+    var un = undefined;
+    var str = "abc";
+    var strObj = new String("abc");
+</pre>
+	<div id="valueExpressionResults"></div>
+	<script>
+		(function () {
+			var evaluator = ExpressionEvaluator('div#valueExpressionResults',
+					                            document.getElementById('valueExpEnv').innerText);
+			evaluator.showEvalList([
+				{exp: 'true == true'},
+				{exp: 'true == false'},
+				{exp: 'false == false'}
+			]);
+			evaluator.showEvalList( [
+				{exp: 'true == 1'},
+				{exp: 'true == 0'},
+				{exp: 'true == ""'}
+			]);
+			evaluator.showEvalList([
+				{exp: 'false == 1'},
+				{exp: 'false == 0'},
+				{exp: 'false == ""'}
+			]);
+			evaluator.showEvalList( [
+				{ exp: '1 == 1'},
+				{ exp: '1 == "1"', isSurprising: true},
+				{ exp: '0 == 0'},
+				{ exp: '0 == 1'}
+			]);
+			evaluator.showEvalList( [
+				{  exp: '0 == ""', isSurprising: true},
+				{  exp: '"0" == ""'},
+				{  exp: 'str == strObj'},
+				{  exp: '0 == -0'},
+				{  exp: '0 == NaN'},
+				{  exp: 'un == null', isSurprising: true},
+				{  exp: 'un != null'},
+				{  exp: 'NaN == NaN', isSurprising: true},
+				{  exp: 'NaN != NaN', isSurprising: true},
+			]);
+		}());
+	</script>
+
+	<hr>
+	<h5>Value Logic</h5>
+	<div id="valueLogicResults"></div>
+	<script>
+		(function (we) {
+			var evaluator = ExpressionEvaluator('div#valueLogicResults');
+			evaluator.showEvalList([   {exp: '0 && 0'},
+				                       {exp: '0 && 1'},
+				                       {exp: '1 && 0'},
+				                       {exp: '1 && 2', isSurprising: true},
+				                       {exp: '"" && ""'},
+				                       {exp: '"a" && ""'},
+				                       {exp: '"" && "b"'},
+				                       {exp: '"a" && "b"'},
+				                       {exp: '"" || ""'},
+				                       {exp: '"a" || ""'},
+				                       {exp: '"" || "b"'},
+				                       {exp: '"a" || "b"'},
+				                       {exp: '""? "true": "false"'},
+				                       {exp: '"a"? "true": "false"'},
+				                       {exp: '"0"? "true": "false"'}
+			                       ]);
+		}());
+	</script>
+
+	<hr>
+	<h5>Truthyness</h5>
+<pre id="truthynessEnv"
+     title="Truthyness environment">
+    var un1 = undefined;
+    // var un2 = not even defined as undefined;
+    var f = function() {};
+</pre>
+	<div id="truthynessResults"></div>
+	<script>
+		(function () {
+			var evaluator = ExpressionEvaluator('div#truthynessResults',
+			                                    document.getElementById('truthynessEnv').innerText);
+			evaluator.showEvalList([   {exp: '0? "yes": "no"'},
+				                       {exp: '-1? "yes": "no"'},
+				                       {exp: '-0? "yes": "no"'},
+				                       {exp: '1? "yes": "no"'},
+				                       {exp: '""? "yes": "no"'},
+				                       {exp: '"a"? "yes": "no"'},
+				                       {exp: 'un1? "yes": "no"'},
+				                       {exp: 'undefined? "yes": "no"'},
+				                       {exp: 'un2? "yes": "no"'},
+				                       {exp: 'null? "yes": "no"'},
+				                       {exp: 'NaN? "yes": "no"'},
+				                       {exp: '[]? "yes": "no"', isSurprising: true},
+				                       {exp: '{}? "yes": "no"', isSurprising: true},
+				                       {exp: 'f? "yes": "no"', isSurprising: true}
+			                       ]);
+		}());
+	</script>
+
+	<hr>
+	<h5>The typeof Operator</h5>
+	<p>
+		Beware of number / string conversions when mixing types in an expression.
+	</p>
+<pre id="typeofEnv"
+		title="typeof Operator environment">
+    var un = undefined;
+    var obj1 = {};
+    var f = function() {};
+</pre>
+	<div id="typeofResults"></div>
+	<script>
+		(function () {
+			var evaluator = ExpressionEvaluator('div#typeofResults',
+			                                    document.getElementById('typeofEnv').innerText);
+			evaluator.showEvalList([   {exp: 'typeof true'},
+				                       {exp: 'typeof 0'},
+				                       {exp: 'typeof -0'},
+				                       {exp: 'typeof 1'},
+				                       {exp: 'typeof ""'},
+				                       {exp: 'typeof "a"'},
+				                       {exp: 'typeof new String("a")', isSurprising: true},
+				                       {exp: 'typeof un'},
+				                       {exp: 'typeof undefined'},
+				                       {exp: 'typeof null'},
+				                       {exp: 'typeof []', isSurprising: true},
+				                       {exp: 'typeof obj1'},
+				                       {exp: 'typeof f'},
+				                       {exp: 'typeof NaN', isSurprising: true}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'typeof (1 + 1)'},
+				                       {exp: '1 + 1'},
+				                       {exp: '1 + 1 == 2'},
+				                       {exp: 'typeof ("1" + 1)', isSurprising: true},
+				                       {exp: '1 + "1"', isSurprising: true},
+				                       {exp: '"1" + 1 == 2', isSurprising: true},
+				                       {exp: 'Number("1") + 1 == 2'}
+			                       ]);
+		}());
+	</script>
+
+	<hr>
+	<h5>Identity Comparisons</h5>
+	<p>
+		The === and !== operators perform strict equality and inequality comparisons.
+		They do not attempt to convert the operands to compatible types before checking equality.
+	</p>
+	<p>
+		For value types (e.g., number):
+		a === b returns true if a and b have the same value and are of the same type.
+	</p>
+	<p>
+		For strings:
+		a === b returns true if a and b have the same value and are of the same type,
+		i.e., not mixing a "string" value type with a "String" object type.
+	</p>
+	<p>
+		<strong>For reference types:</strong>
+		a === b returns true if, and only if, a and b reference the exact same object.
+	</p>
+<pre id="identityComparisonEnv1"
+	 title="Identity comparison environment 1">
+    var obj1 = { name: 'joe' };
+    var obj2 = angular.copy(obj1);  // Value and type equality
+    var obj3 = obj1;
+    var str = "abc";
+    var strObj = new String("abc");
+</pre>
+	<div id="identityComparisonResults1"></div>
+	<script>
+		(function () {
+			var evaluator = ExpressionEvaluator('div#identityComparisonResults1',
+			                                    document.getElementById('identityComparisonEnv1').innerText);
+			evaluator.showEvalList([   {exp: 'true === true'},
+				                       {exp: 'true === false'},
+				                       {exp: 'false === false'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'true === 1'},
+				                       {exp: 'true === 0'},
+				                       {exp: 'true === ""'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'false === 1'},
+				                       {exp: 'false === 0'},
+				                       {exp: 'false === ""'}
+			                       ]);
+			evaluator.showEvalList([   {exp: '1 === 1'},
+				                       {exp: '1 === "1"'},
+				                       {exp: '0 === 0'},
+				                       {exp: '0 === 1'},
+				                       {exp: '0 === -0'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'obj1 === obj1'},
+				                       {exp: 'obj1 === obj2', isSurprising: true},
+				                       {exp: 'obj1 == obj2', isSurprising: true},
+				                       {exp: 'obj1 === obj3'},
+				                       {exp: 'obj2 === obj3', isSurprising: true},
+				                       {exp: 'str === strObj', isSurprising: true}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'obj1 !== obj1'},
+				                       {exp: 'obj1 !== obj2', isSurprising: true},
+				                       {exp: 'obj1 !== obj3'},
+				                       {exp: 'obj2 !== obj3', isSurprising: true}
+			                       ]);
+		}());
+	</script>
+
+<pre id="identityComparisonEnv2"
+     title="Identity comparison environment 2">
+    var obj1 = {};
+    var obj2 = undefined;
+</pre>
+	<div id="identityComparisonResults2"></div>
+	<script>
+		(function () {
+			var evaluator = ExpressionEvaluator('div#identityComparisonResults2',
+			                                    document.getElementById('identityComparisonEnv2').innerText);
+			evaluator.showEvalList([   {exp: 'obj1 === obj1'},
+				                       {exp: 'obj1 === obj2'},
+				                       {exp: 'obj1 === undefined'},
+				                       {exp: 'obj2 === undefined'},
+				                       {exp: 'undefined === undefined'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'obj1 !== obj1'},
+				                       {exp: 'obj1 !== obj2'},
+				                       {exp: 'obj1 !== undefined'},
+				                       {exp: 'obj2 !== undefined'},
+				                       {exp: 'undefined !== undefined'}
+			                       ]);
+		}());
+	</script>
+
+<pre id="identityComparisonEnv3"
+     title="Identity comparison environment 3">
+    var obj1 = {};
+    var obj2 = null;
+</pre>
+	<div id="identityComparisonResults3"></div>
+	<script>
+		(function () {
+			var evaluator = ExpressionEvaluator('div#identityComparisonResults3',
+			                                    document.getElementById('identityComparisonEnv3').innerText);
+			evaluator.showEvalList([   {exp: 'obj1 === obj1'},
+				                       {exp: 'obj1 === obj2'},
+				                       {exp: 'obj1 === null'},
+				                       {exp: 'obj2 === obj2'},
+				                       {exp: 'null === null'},
+				                       {exp: 'obj1 !== obj1'},
+				                       {exp: 'obj1 !== obj2'},
+				                       {exp: 'obj1 !== null'},
+				                       {exp: 'obj2 !== obj2'},
+				                       {exp: 'null !== null'}
+			                       ]);
+		}());
+	</script>
+
+	<hr>
+	<h5>AngularJS Convenience Functions</h5>
+<pre id="ngConvenienceEnv"
+     title="AngularJS convenience functions environment">
+    var obj1 = {};
+    var obj2 = null;
+    var obj3 = undefined;
+    // var obj4 = not even defined as undefined
+    var one = 1;
+    var scriptTag = document.getElementById("script_ng");
+    var f = function() {};
+</pre>
+	<div id="ngConvenienceResults"></div>
+	<script id="script_ng">
+		(function () {
+			var evaluator = ExpressionEvaluator('div#ngConvenienceResults',
+			                                    document.getElementById('ngConvenienceEnv').innerText);
+			evaluator.showEvalList([   {exp: 'angular.isDefined(obj1)'},
+				                       {exp: 'angular.isDefined(obj2)'},
+				                       {exp: 'angular.isDefined(obj3)'},
+				                       {exp: 'angular.isDefined(undefined)'},
+				                       {exp: 'angular.isDefined(obj4)'},
+				                       {exp: 'angular.isDefined(one)'},
+				                       {exp: 'angular.isDefined(NaN)'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'angular.isUndefined(obj1)'},
+				                       {exp: 'angular.isUndefined(obj2)'},
+				                       {exp: 'angular.isUndefined(obj3)'},
+				                       {exp: 'angular.isUndefined(undefined)'},
+				                       {exp: 'angular.isUndefined(one)'},
+				                       {exp: 'angular.isUndefined(NaN)'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'angular.isObject(obj1)'},
+				                       {exp: 'angular.isObject(obj2)'},
+				                       {exp: 'angular.isObject(obj3)'},
+				                       {exp: 'angular.isObject(undefined)'},
+				                       {exp: 'angular.isObject(one)'},
+				                       {exp: 'angular.isObject(NaN)'}
+			                       ]);
+			evaluator.showEvalList([   {exp: 'angular.isArray([])'},
+				                       {exp: 'angular.isDate(new Date())'},
+				                       {exp: 'angular.isElement(scriptTag)', isSurprising: true},
+				                       {exp: 'angular.isFunction(f)'},
+				                       {exp: 'angular.isNumber(1)'},
+				                       {exp: 'angular.isString("Hi")'}
+			                       ]);
+		}());
+	</script>
+
+	<hr>
+	<h5> You try it ... </h5>
+	<div class="container-fluid table">
+		<div class="row">
+			<div class="col-md-3">
+				Expression
+			</div>
+			<div class="col-md-9">
+				<input type="text"
+				       class="form-control input-sm"
+				       onchange="youTryExpressionEvaluator.showEval({ exp: this.value })"/>
+			</div>
+		</div>
+		<br>
+		<div id="youTryItDiv"></div>
+	</div>
+	<script>
+		var youTryExpressionEvaluator = ExpressionEvaluator('div#youTryItDiv');
+	</script>
+	<hr>
+</div>
+
+For sufficient JS Truth:
+<a href="http://stackoverflow.com/questions/359494/does-it-matter-which-equals-operator-vs-i-use-in-javascript-comparisons"
+   target="_blank">Stack Overflow</a>
+<br/>
+For tabular JS truth:
+<a href="http://dorey.github.io/JavaScript-Equality-Table/"
+   target="_blank">Equality in JavaScript</a>
+<br/>
+To fiddle with JS truth:
+<a href="http://jsfiddle.net/fBKbT/20/"
+   target="_blank">Javascript Loose Comparison</a>
+<br/>
+To truly know JS:
+<a href="http://www.ecma-international.org/publications/standards/Ecma-262.htm"
+   target="_blank">Standard ECMA-262 </a>
+
+<br><br>
+<small>Sometimes JavaScript's type system makes me want to run away screaming. – Yawar Nov 8 '12 at 4:06</small>
+<hr>
+<a rel="license"
+   href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License"
+	     style="border-width:0"
+         src="https://i.creativecommons.org/l/by/4.0/80x15.png"/></a>
+	<span xmlns:dct="http://purl.org/dc/terms/"
+	      property="dct:title">JS Truth</span> by
+	<a xmlns:cc="http://creativecommons.org/ns#"
+       href="http://gilk.org"
+       target="_blank"
+       property="cc:attributionName"
+       rel="cc:attributionURL">Gil Kerley</a>
+ is licensed under a <a rel="license"
+                        href="http://creativecommons.org/licenses/by/4.0/"
+						target="_blank">
+	Creative Commons Attribution 4.0 International License</a>.
+</body>
+</html>
